@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow: Gerenciador de Tarefas e Listas</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#121214',
+                        cardBg: '#202024',
+                        primary: '#00B37E',
+                        primaryHover: '#00875F',
+                        danger: '#F75A68',
+                        warning: '#FBA94C',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-darkBg text-[#E1E1E6] min-h-screen flex flex-col font-sans select-none antialiased">
+
+    <!-- Container Principal do App Mobile -->
+    <div class="max-w-md w-full mx-auto flex flex-col h-screen bg-darkBg border-x border-[#29292E] shadow-2xl relative overflow-hidden">
+        
+        <!-- Header -->
+        <header class="px-6 pt-6 pb-4 bg-cardBg border-b border-[#29292E]">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="bg-primary/20 p-2 rounded-xl text-primary">
+                        <i data-lucide="zap" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-wide text-white">TaskFlow</h1>
+                        <p class="text-xs text-[#8D8D99]">Gerenciador de Tarefas</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <!-- Botão Pomodoro -->
+                    <button onclick="togglePomodoroModal(true)" class="p-2.5 bg-darkBg hover:bg-[#29292E] rounded-xl text-primary transition-colors relative group" title="Modo Foco (Pomodoro)">
+                        <i data-lucide="timer" class="w-5 h-5"></i>
+                    </button>
+                    <!-- Botão Limpar Concluídas -->
+                    <button onclick="clearCompletedTasks()" class="p-2.5 bg-darkBg hover:bg-[#29292E] rounded-xl text-[#8D8D99] hover:text-danger transition-colors" title="Limpar Concluídas">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progresso e Saudação -->
+            <div class="mt-4">
+                <div class="flex justify-between items-center text-xs text-[#8D8D99] mb-1.5">
+                    <span id="greeting-text">Suas tarefas de hoje</span>
+                    <span id="progress-count">0 de 0 concluídas</span>
+                </div>
+                <div class="w-full bg-darkBg h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-primary h-full transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+
+            <!-- Filtros Rápidos -->
+            <div class="flex gap-2 mt-4">
+                <button onclick="setFilter('all')" id="filter-all" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors">Todas</button>
+                <button onclick="setFilter('pending')" id="filter-pending" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Pendentes</button>
+                <button onclick="setFilter('completed')" id="filter-completed" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Concluídas</button>
+            </div>
+        </header>
+
+        <!-- Lista de Tarefas (Scrollável) -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-3" id="task-list">
+            <!-- As tarefas injetadas via JS aparecem aqui -->
+        </main>
+
+        <!-- Estado Vazio (Caso não haja tarefas) -->
+        <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="bg-cardBg p-4 rounded-full text-[#8D8D99] mb-3">
+                <i data-lucide="check-circle-2" class="w-10 h-10 text-primary"></i>
+            </div>
+            <p class="text-white font-medium text-sm">Tudo limpo por aqui!</p>
+            <p class="text-xs text-[#8D8D99] mt-1">Adicione uma nova tarefa abaixo para começar o seu dia com foco total.</p>
+        </div>
+
+        <!-- Rodapé / Input Fixo -->
+        <footer class="p-4 bg-cardBg border-t border-[#29292E]">
+            <form onsubmit="handleAddTask(event)" class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <input 
+                        type="text" 
+                        id="task-input" 
+                        placeholder="Digite uma nova tarefa..." 
+                        autocomplete="off"
+                        class="w-full bg-darkBg border border-[#29292E] rounded-xl px-4 py-3 text-sm text-white placeholder-[#8D8D99] focus:outline-none focus:border-primary transition-colors pr-10"
+                    >
+                    <!-- Seletor de Prioridade -->
+                    <select id="priority-input" class="absolute right-2 top-1/2 -translate-y-1/2 bg-transparent text-xs text-[#8D8D99] focus:outline-none cursor-pointer">
+                        <option value="high" class="bg-cardBg text-danger">🔴 Alta</option>
+                        <option value="medium" selected class="bg-cardBg text-warning">🟡 Média</option>
+                        <option value="low" class="bg-cardBg text-primary">🟢 Baixa</option>
+                    </select>
+                </div>
+                <button type="submit" class="bg-primary hover:bg-primaryHover text-white p-3 rounded-xl transition-colors flex items-center justify-center shadow-lg shadow-primary/20">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </footer>
+
+    </div>
+
+    <!-- Modal do Modo Foco (Pomodoro) com Seleção de Tempo -->
+    <div id="pomodoro-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-cardBg border border-[#29292E] rounded-2xl w-full max-w-sm p-6 flex flex-col items-center relative shadow-2xl animate-in fade-in zoom-in duration-200">
+            <button onclick="togglePomodoroModal(false)" class="absolute top-4 right-4 text-[#8D8D99] hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="bg-primary/20 p-3 rounded-2xl text-primary mb-3">
+                <i data-lucide="timer" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-1">Modo Foco (Pomodoro)</h3>
+            <p class="text-xs text-[#8D8D99] mb-4 text-center">Escolha a duração e mantenha o foco em suas tarefas.</p>
+
+            <!-- Seletor de Tempo do Timer -->
+            <div class="flex gap-2 mb-6 w-full">
+                <button onclick="setPomodoroTime(25)" id="btn-time-25" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors">25 min</button>
+                <button onclick="setPomodoroTime(15)" id="btn-time-15" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">15 min</button>
+                <button onclick="setPomodoroTime(10)" id="btn-time-10" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">10 min</button>
+                <button onclick="setPomodoroTime(5)" id="btn-time-5" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">5 min</button>
+            </div>
+
+            <!-- Display do Relógio -->
+            <div class="text-5xl font-extrabold text-white tracking-widest mb-6 font-mono" id="pomodoro-display">
+                25:00
+            </div>
+
+            <!-- Botões de Controle -->
+            <div class="flex gap-3 w-full">
+                <button onclick="togglePomodoroTimer()" id="pomodoro-toggle-btn" class="flex-1 bg-primary hover:bg-primaryHover text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-4 h-4"></i> Iniciar
+                </button>
+                <button onclick="resetPomodoroTimer()" class="px-4 bg-darkBg hover:bg-[#29292E] text-[#8D8D99] hover:text-white rounded-xl transition-colors">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Lógica do App -->
+    <script>
+        // Estado do App
+        let tasks = JSON.parse(localStorage.getItem('taskflow_tasks')) || [
+            { id: '1', title: 'Comprar café e pão na padaria', isCompleted: false, priority: 'high' },
+            { id: '2', title: 'Enviar relatório de tarefas', isCompleted: false, priority: 'medium' },
+            { id: '3', title: 'Estudar desenvolvimento mobile', isCompleted: true, priority: 'low' }
+        ];
+        let currentFilter = 'all';
+
+        // Estado do Pomodoro
+        let selectedMinutes = 25;
+        let pomodoroTimeTotal = selectedMinutes * 60;
+        let pomodoroTimeLeft = pomodoroTimeTotal;
+        let pomodoroTimerId = null;
+        let isPomodoroRunning = false;
+
+        // Inicializar ícones Lucide
+        function initIcons() {
+            lucide.createIcons();
+        }
+
+        // Salvar tarefas
+        function saveTasks() {
+            localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        // Adicionar Tarefa
+        function handleAddTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('task-input');
+            const prioritySelect = document.getElementById('priority-input');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const newTask = {
+                id: Date.now().toString(),
+                title: text,
+                isCompleted: false,
+                priority: prioritySelect.value
+            };
+
+            tasks.unshift(newTask);
+            input.value = '';
+            saveTasks();
+        }
+
+        // Alternar Status da Tarefa
+        function toggleTask(id) {
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { ...task, isCompleted: !task.isCompleted };
+                }
+                return task;
+            });
+            saveTasks();
+        }
+
+        // Deletar Tarefa
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+        }
+
+        // Limpar Concluídas
+        function clearCompletedTasks() {
+            tasks = tasks.filter(task => !task.isCompleted);
+            saveTasks();
+        }
+
+        // Definir Filtro
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['all', 'pending', 'completed'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filter) {
+                    btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors';
+                } else {
+                    btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors';
+                }
+            });
+            renderTasks();
+        }
+
+        // Renderizar Lista na Tela
+        function renderTasks() {
+            const listContainer = document.getElementById('task-list');
+            const emptyState = document.getElementById('empty-state');
+            const progressCount = document.getElementById('progress-count');
+            const progressBar = document.getElementById('progress-bar');
+
+            // Filtrar tarefas
+            let filteredTasks = tasks;
+            if (currentFilter === 'pending') {
+                filteredTasks = tasks.filter(t => !t.isCompleted);
+            } else if (currentFilter === 'completed') {
+                filteredTasks = tasks.filter(t => t.isCompleted);
+            }
+
+            // Atualizar progresso
+            const completedCount = tasks.filter(t => t.isCompleted).length;
+            const totalCount = tasks.length;
+            progressCount.textContent = `${completedCount} de ${totalCount} concluídas`;
+            const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+            progressBar.style.width = `${progressPercent}%`;
+
+            // Estado vazio
+            if (filteredTasks.length === 0) {
+                listContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            // Cores de prioridade
+            const priorityColors = {
+                high: 'bg-danger',
+                medium: 'bg-warning',
+                low: 'bg-primary'
+            };
+
+            listContainer.innerHTML = filteredTasks.map(task => `
+                <div class="bg-cardBg border border-[#29292E] p-3.5 rounded-xl flex items-center justify-between gap-3 group hover:border-[#3e3e46] transition-all">
+                    <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="toggleTask('${task.id}')">
+                        <div class="w-3 h-3 rounded-full flex-shrink-0 ${priorityColors[task.priority]}"></div>
+                        <span class="text-sm truncate ${task.isCompleted ? 'line-through text-[#8D8D99] opacity-75' : 'text-white'}">
+                            ${escapeHtml(task.title)}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="toggleTask('${task.id}')" class="p-1.5 text-[#8D8D99] hover:text-primary transition-colors" title="${task.isCompleted ? 'Desmarcar' : 'Concluir'}">
+                            <i data-lucide="${task.isCompleted ? 'check-circle-2' : 'circle'}" class="w-4 h-4 ${task.isCompleted ? 'text-primary' : ''}"></i>
+                        </button>
+                        <button onclick="deleteTask('${task.id}')" class="p-1.5 text-[#8D8D99] hover:text-danger transition-colors opacity-0 group-hover:opacity-100" title="Apagar">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            initIcons();
+        }
+
+        // Escapar HTML contra XSS
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // --- Lógica do Pomodoro ---
+        function togglePomodoroModal(show) {
+            const modal = document.getElementById('pomodoro-modal');
+            if (show) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+                pausePomodoroTimer();
+            }
+        }
+
+        function setPomodoroTime(minutes) {
+            pausePomodoroTimer();
+            selectedMinutes = minutes;
+            pomodoroTimeTotal = minutes * 60;
+            pomodoroTimeLeft = pomodoroTimeTotal;
+            updatePomodoroDisplay();
+
+            // Atualizar botões visuais de tempo
+            [25, 15, 10, 5].forEach(min => {
+                const btn = document.getElementById(`btn-time-${min}`);
+                if (btn) {
+                    if (min === minutes) {
+                        btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors';
+                    } else {
+                        btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors';
+                    }
+                }
+            });
+        }
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTimeLeft / 60);
+            const seconds = pomodoroTimeLeft % 60;
+            document.getElementById('pomodoro-display').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function togglePomodoroTimer() {
+            if (isPomodoroRunning) {
+                pausePomodoroTimer();
+            } else {
+                startPomodoroTimer();
+            }
+        }
+
+        function startPomodoroTimer() {
+            isPomodoroRunning = true;
+            const btn = document.getElementById('pomodoro-toggle-btn');
+            btn.innerHTML = `<i data-lucide="pause" class="w-4 h-4"></i> Pausar`;
+            btn.className = 'flex-1 bg-warning hover:bg-warning/80 text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2';
+            initIcons();
+
+            pomodoroTimerId = setInterval(() => {
+                if (pomodoroTimeLeft > 0) {
+                    pomodoroTimeLeft--;
+                    updatePomodoroDisplay();
+                } else {
+                    pausePomodoroTimer();
+                    alert('Tempo de foco concluído! Faça uma pausa.');
+                }
+            }, 1000);
+        }
+
+        function pausePomodoroTimer() {
+            isPomodoroRunning = false;
+            clearInterval(pomodoroTimerId);
+            const btn = document.getElementById('pomodoro-toggle-btn');
+            btn.innerHTML = `<i data-lucide="play" class="w-4 h-4"></i> Iniciar`;
+            btn.className = 'flex-1 bg-primary hover:bg-primaryHover text-white py-3 rounded-xl font-medium text-sm transition-colors flex items-center justify-center gap-2';
+            initIcons();
+        }
+
+        function resetPomodoroTimer() {
+            pausePomodoroTimer();
+            pomodoroTimeLeft = pomodoroTimeTotal;
+            updatePomodoroDisplay();
+        }
+
+        // Inicializar
+        renderTasks();
+        initIcons();
+    </script>
+</body>
+</html>
