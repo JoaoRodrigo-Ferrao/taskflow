@@ -26,13 +26,13 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-darkBg text-[#E1E1E6] min-h-screen flex flex-col font-sans select-none antialiased">
+<body class="bg-darkBg text-[#E1E1E6] min-h-[100dvh] flex flex-col font-sans select-none antialiased overflow-hidden">
 
     <!-- Container Principal do App Mobile -->
-    <div class="max-w-md w-full mx-auto flex flex-col h-screen bg-darkBg border-x border-[#29292E] shadow-2xl relative overflow-hidden">
+    <div class="max-w-md w-full mx-auto flex flex-col h-[100dvh] bg-darkBg border-x border-[#29292E] shadow-2xl relative overflow-hidden">
         
         <!-- Header -->
-        <header class="px-6 pt-6 pb-4 bg-cardBg border-b border-[#29292E]">
+        <header class="px-6 pt-6 pb-4 bg-cardBg border-b border-[#29292E] flex-shrink-0">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2">
                     <div class="bg-primary/20 p-2 rounded-xl text-primary">
@@ -75,21 +75,23 @@
         </header>
 
         <!-- Lista de Tarefas (Scrollável) -->
-        <main class="flex-1 overflow-y-auto p-4 space-y-3" id="task-list">
-            <!-- As tarefas injetadas via JS aparecem aqui -->
+        <main class="flex-1 overflow-y-auto p-4 space-y-3 relative" id="main-content-area">
+            <div id="task-list" class="space-y-3">
+                <!-- As tarefas injetadas via JS aparecem aqui -->
+            </div>
+
+            <!-- Estado Vazio (Caso não haja tarefas) -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center p-8 text-center h-full">
+                <div class="bg-cardBg p-4 rounded-full text-[#8D8D99] mb-3">
+                    <i data-lucide="check-circle-2" class="w-10 h-10 text-primary"></i>
+                </div>
+                <p class="text-white font-medium text-sm">Tudo limpo por aqui!</p>
+                <p class="text-xs text-[#8D8D99] mt-1">Adicione uma nova tarefa abaixo para começar o seu dia com foco total.</p>
+            </div>
         </main>
 
-        <!-- Estado Vazio (Caso não haja tarefas) -->
-        <div id="empty-state" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div class="bg-cardBg p-4 rounded-full text-[#8D8D99] mb-3">
-                <i data-lucide="check-circle-2" class="w-10 h-10 text-primary"></i>
-            </div>
-            <p class="text-white font-medium text-sm">Tudo limpo por aqui!</p>
-            <p class="text-xs text-[#8D8D99] mt-1">Adicione uma nova tarefa abaixo para começar o seu dia com foco total.</p>
-        </div>
-
         <!-- Rodapé / Input Fixo -->
-        <footer class="p-4 bg-cardBg border-t border-[#29292E]">
+        <footer class="p-4 bg-cardBg border-t border-[#29292E] flex-shrink-0 z-10">
             <form onsubmit="handleAddTask(event)" class="flex items-center gap-2">
                 <div class="relative flex-1">
                     <input 
