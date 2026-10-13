@@ -276,11 +276,11 @@
                             ${escapeHtml(task.title)}
                         </span>
                     </div>
-                    <div class="flex items-center gap-1">
+                    <div class="flex items-center gap-1.5">
                         <button onclick="toggleTask('${task.id}')" class="p-1.5 text-[#8D8D99] hover:text-primary transition-colors" title="${task.isCompleted ? 'Desmarcar' : 'Concluir'}">
                             <i data-lucide="${task.isCompleted ? 'check-circle-2' : 'circle'}" class="w-4 h-4 ${task.isCompleted ? 'text-primary' : ''}"></i>
                         </button>
-                        <button onclick="deleteTask('${task.id}')" class="p-1.5 text-[#8D8D99] hover:text-danger transition-colors opacity-0 group-hover:opacity-100" title="Apagar">
+                        <button onclick="deleteTask('${task.id}')" class="p-1.5 text-[#8D8D99] hover:text-danger transition-colors" title="Apagar">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
@@ -342,6 +342,39 @@
             }
         }
 
+        // Função para tocar bipe de alarme digital sintético
+        function playAlarmSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Toca 3 bipes curtos em sequência
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        if (audioCtx.state === 'suspended') {
+                            audioCtx.resume();
+                        }
+                        const oscillator = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+
+                        // Tipo de onda cuadrada dá um som clássico de relógio digital/alarme
+                        oscillator.type = 'square';
+                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota A5
+
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+
+                        oscillator.start();
+                        oscillator.stop(audioCtx.currentTime + 0.3);
+                    }, i * 400); // intervalo de 400ms entre cada bipe
+                }
+            } catch (e) {
+                console.log('Áudio não suportado ou bloqueado pelo navegador', e);
+            }
+        }
+
         function startPomodoroTimer() {
             isPomodoroRunning = true;
             const btn = document.getElementById('pomodoro-toggle-btn');
@@ -355,6 +388,7 @@
                     updatePomodoroDisplay();
                 } else {
                     pausePomodoroTimer();
+                    playAlarmSound(); // Toca o som do despertador
                     alert('Tempo de foco concluído! Faça uma pausa.');
                 }
             }, 1000);
