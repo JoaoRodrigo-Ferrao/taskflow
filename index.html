@@ -48,10 +48,6 @@
                     <button onclick="togglePomodoroModal(true)" class="p-2.5 bg-darkBg hover:bg-[#29292E] rounded-xl text-primary transition-colors relative group" title="Modo Foco (Pomodoro)">
                         <i data-lucide="timer" class="w-5 h-5"></i>
                     </button>
-                    <!-- Botão Limpar Concluídas -->
-                    <button onclick="clearCompletedTasks()" class="p-2.5 bg-darkBg hover:bg-[#29292E] rounded-xl text-[#8D8D99] hover:text-danger transition-colors" title="Limpar Concluídas">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
                 </div>
             </div>
 
@@ -66,11 +62,11 @@
                 </div>
             </div>
 
-            <!-- Filtros Rápidos -->
+            <!-- Filtros Rápidos (Com maior padding vertical) -->
             <div class="flex gap-2 mt-4">
-                <button onclick="setFilter('all')" id="filter-all" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors">Todas</button>
-                <button onclick="setFilter('pending')" id="filter-pending" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Pendentes</button>
-                <button onclick="setFilter('completed')" id="filter-completed" class="flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Concluídas</button>
+                <button onclick="setFilter('all')" id="filter-all" class="flex-1 py-3 text-xs font-medium rounded-lg bg-primary text-white transition-colors">Todas</button>
+                <button onclick="setFilter('pending')" id="filter-pending" class="flex-1 py-3 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Pendentes</button>
+                <button onclick="setFilter('completed')" id="filter-completed" class="flex-1 py-3 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors">Concluídas</button>
             </div>
         </header>
 
@@ -214,15 +210,9 @@
             saveTasks();
         }
 
-        // Deletar Tarefa
+        // Deletar Tarefa individual
         function deleteTask(id) {
             tasks = tasks.filter(task => task.id !== id);
-            saveTasks();
-        }
-
-        // Limpar Concluídas
-        function clearCompletedTasks() {
-            tasks = tasks.filter(task => !task.isCompleted);
             saveTasks();
         }
 
@@ -232,9 +222,9 @@
             ['all', 'pending', 'completed'].forEach(f => {
                 const btn = document.getElementById(`filter-${f}`);
                 if (f === filter) {
-                    btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-primary text-white transition-colors';
+                    btn.className = 'flex-1 py-3 text-xs font-medium rounded-lg bg-primary text-white transition-colors';
                 } else {
-                    btn.className = 'flex-1 py-1.5 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors';
+                    btn.className = 'flex-1 py-3 text-xs font-medium rounded-lg bg-darkBg text-[#8D8D99] hover:text-white transition-colors';
                 }
             });
             renderTasks();
